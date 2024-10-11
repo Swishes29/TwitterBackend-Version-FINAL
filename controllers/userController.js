@@ -1,40 +1,53 @@
-// controllers/userController.js
-const { User } = require('../models');
 const bcrypt = require('bcrypt');
+const { User } = require('../models');
 
-// Crear usuario
+const hashPassword = (password) => bcrypt.hash(password, 10);
+
+const createUserObject = ({ username, email, password }) => ({
+  username,
+  email,
+  password
+});
+
 exports.createUser = async (req, res) => {
-    try {
-        const { username, email, password } = req.body;
-        const newUser = await User.create({ username, email, password });
-        res.status(201).json(newUser);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
+  try {
+    const { username, email, password } = req.body;
+
+    const hashedPassword = await hashPassword(password);
+    const newUser = createUserObject({ username, email, password: hashedPassword });
+    
+    const createdUser = await User.create(newUser);
+    
+    res.status(201).json(createdUser);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: error.message });
+  }
 };
 
-// Iniciar sesión
+
+const verifyPassword = (plainPassword, hashedPassword) => bcrypt.compare(plainPassword, hashedPassword);
+
+
 exports.loginUser = async (req, res) => {
-    try {
-        const { email, password } = req.body;
+  try {
+    const { email, password } = req.body;
 
-        // Buscar al usuario por email
-        const user = await User.findOne({ where: { email } });
-
-        if (!user) {
-            return res.status(404).json({ error: 'Usuario no encontrado' });
-        }
-
-        // Comparar la contraseña proporcionada con la almacenada
-        const isMatch = await bcrypt.compare(password, user.password);
-
-        if (!isMatch) {
-            return res.status(401).json({ error: 'Contraseña incorrecta' });
-        }
-
-    
-        res.status(200).json({ message: 'Inicio de sesión exitoso', user });
-    } catch (error) {
-        res.status(500).json({ error: error.message });
+  
+    const user = await User.findOne({ where: { email } });
+    if (!user) {
+      return res.status(404).json({ error: 'Usuario no encontrado' });
     }
+
+   
+    const isMatch = await verifyPassword(password, user.password);
+    if (!isMatch) {
+      return res.status(401).json({ error: 'Contraseña incorrecta' });
+    }
+
+    res.status(200).json({ message: 'Inicio de sesión exitoso', user });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: error.message });
+  }
 };

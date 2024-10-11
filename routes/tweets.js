@@ -1,8 +1,11 @@
 const express = require('express');
-const router = express.Router();
 const tweetController = require('../controllers/tweetController');
 
-router.post('/', tweetController.createTweet);
-router.get('/', tweetController.getAllTweets);
+const router = express.Router();
+
+
+router.post('/', tweetController.createTweet);  // Crear un tweet
+router.get('/', tweetController.getTweets);     // Obtener todos los tweets
+router.delete('/:id', tweetController.deleteTweet);  // Eliminar un tweet por ID
 
 module.exports = router;
