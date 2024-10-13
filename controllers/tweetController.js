@@ -47,3 +47,26 @@ exports.deleteTweet = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+
+// Buscar tweets por contenido
+exports.searchTweets = async (req, res) => {
+  const { query } = req.query; // Obtener el parámetro de búsqueda
+
+  if (!query) {
+    return res.status(400).json({ error: 'El parámetro de búsqueda es requerido' });
+  }
+
+  try {
+    const tweets = await Tweet.findAll({
+      where: {
+        content: {
+          [Op.like]: `%${query}%`,  // Buscar coincidencias parciales
+        },
+      },
+    });
+
+    res.status(200).json(tweets);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
